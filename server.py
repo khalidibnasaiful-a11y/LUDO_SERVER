@@ -10,15 +10,15 @@ from config import ENTRY_FEES
 from game.room_manager import RoomManager
 from game.match_manager import MatchManager
 
-# Create database tables
+# Create DB tables
 Base.metadata.create_all(bind=engine)
 
 # FastAPI
 app = FastAPI()
 
-# Socket.IO
+# Socket.IO server
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
-socket_app = socketio.ASGIApp(sio, app)
+socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
 
 # CORS
 app.add_middleware(
@@ -34,7 +34,6 @@ room_manager = RoomManager()
 match_manager = MatchManager()
 
 
-# DB Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -43,17 +42,14 @@ def get_db():
         db.close()
 
 
-# Create user
 @app.post("/create-user")
 def create_new_user(data: UserCreate, db=Depends(get_db)):
     user = get_user(db, data.username)
     if user:
         return {"message": "User already exists", "user": user}
-
     return create_user(db, data)
 
 
-# List rooms
 @app.get("/")
 def home():
     return {"message": "Ludo Server Running Successfully!"}
@@ -64,7 +60,6 @@ def list_rooms():
     return ENTRY_FEES
 
 
-# SOCKET.IO EVENTS
 @sio.event
 async def join_room(sid, data):
     user_id = data["user_id"]
@@ -97,6 +92,6 @@ async def match_winner(sid, data):
     await sio.emit("match_result", match)
 
 
-# RUN SERVER
+# For local run only
 if __name__ == "__main__":
     uvicorn.run(socket_app, host="127.0.0.1", port=8000)

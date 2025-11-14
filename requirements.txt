@@ -1,7 +1,8 @@
 fastapi
 uvicorn[standard]
-gunicorn
-sqlalchemy
+python-socketio
+python-engineio
+SQLAlchemy
 psycopg2-binary
-python-dotenv
-websockets
+pydantic
+gunicorn
